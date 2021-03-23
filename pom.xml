@@ -35,6 +35,32 @@
             <version>5.3.2</version>
         </dependency>
 
+         <dependency>
+            <groupId>org.reflections</groupId>
+            <artifactId>reflections</artifactId>
+            <version>0.9.12</version>
+        </dependency>
+        <dependency>
+            <groupId>ru.headhunter.headhunter-ru</groupId>
+            <artifactId>sofea-api</artifactId>
+            <version>20.50.6-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>ru.headhunter.headhunter-ru</groupId>
+            <artifactId>hh-core-model</artifactId>
+            <version>20.50.6-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>ru.headhunter.headhunter-ru</groupId>
+            <artifactId>fixture-api</artifactId>
+            <version>20.50.6-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>ru.headhunter.headhunter-ru</groupId>
+            <artifactId>billing-client</artifactId>
+            <version>20.50.6-SNAPSHOT</version>
+        </dependency>
+
     </dependencies>
     <build>
         <plugins>

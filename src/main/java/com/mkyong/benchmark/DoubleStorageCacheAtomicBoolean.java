@@ -6,7 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
-public class DoubleStorageCacheAtomicBoolean<K, V> {
+public class DoubleStorageCacheAtomicBoolean<K, V> implements DscInterface<K, V> {
   private final ConcurrentHashMap<K, V> strongStorage = new ConcurrentHashMap<>();
   private final ConcurrentReferenceHashMap<K, V> weakStorage = new ConcurrentReferenceHashMap<>(16, 0.75f, 1,
       ConcurrentReferenceHashMap.ReferenceType.SOFT);

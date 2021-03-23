@@ -1,16 +1,23 @@
 package com.mkyong.benchmark;
 
 import org.openjdk.jmh.annotations.*;
-import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
+import org.reflections.Reflections;
+import org.reflections.scanners.SubTypesScanner;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /*
 http://hg.openjdk.java.net/code-tools/jmh/file/tip/jmh-samples/src/main/java/org/openjdk/jmh/samples/
@@ -18,24 +25,17 @@ http://hg.openjdk.java.net/code-tools/jmh/file/tip/jmh-samples/src/main/java/org
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @State(Scope.Benchmark)
-//@Fork(value = 2, jvmArgs = {"-Xms2G", "-Xmx2G"})
 @Warmup(iterations = 3)
 @Measurement(iterations = 8)
 public class BenchmarkLoop {
+    private final List<Class<?>> dataMap = createClassData();
+    ;
+    private final int dataSize = dataMap.size();
+    private final int strongCollectionSize = dataSize / 3;
+    private final int dataSetLoopSize = 4;
 
-    @Param({"10000"})
-    private int dataSize;
-
-    @Param({"10"})
-    private int dataLoopsCount;
-
-    @Param({"1024"})
-    private int strongCollectionSize;
-
-    private Map<Integer, Integer> integerIntegerMap;
 
     public static void main(String[] args) throws RunnerException {
-
         Options opt = new OptionsBuilder()
             .include(BenchmarkLoop.class.getSimpleName())
             .forks(1)
@@ -43,93 +43,124 @@ public class BenchmarkLoop {
         new Runner(opt).run();
     }
 
-    @Setup
-    public void setup() {
-        integerIntegerMap = createData();
+
+    ExecutorService executorService = Executors.newFixedThreadPool(8);
+
+    @Benchmark
+    public void doubleStorageCacheBigTest() {
+        DoubleStorageCache<Class<?>, Object> doubleStorageCache = new DoubleStorageCache<>(dataSize);
+        process(doubleStorageCache);
     }
 
     @Benchmark
-    public void doubleStorageCacheTest(Blackhole bh) {
-        DoubleStorageCache<Integer, Integer> doubleStorageCache = new DoubleStorageCache<>(strongCollectionSize);
-
-        for (int j = 0; j < dataLoopsCount; j++) {
-            for (int i = 0; i < integerIntegerMap.size(); i++) {
-                doubleStorageCache.computeIfAbsent(i, integerIntegerMap::get);
-            }
-        }
+    public void doubleStorageCacheAtomicBigTest() {
+        DoubleStorageCacheAtomicBoolean<Class<?>, Object> doubleStorageCache = new DoubleStorageCacheAtomicBoolean<>(dataSize);
+        process(doubleStorageCache);
     }
 
     @Benchmark
-    public void doubleStorageCacheBigStrongTest(Blackhole bh) {
-        DoubleStorageCache<Integer, Integer> doubleStorageCache = new DoubleStorageCache<>(dataSize);
+    public void doubleStorageCacheNoBooleanBigTest() {
+        DoubleStorageCacheNoSizeCache<Class<?>, Object> doubleStorageCache = new DoubleStorageCacheNoSizeCache<>(dataSize);
+        process(doubleStorageCache);
+    }
 
-        for (int j = 0; j < dataLoopsCount; j++) {
-            for (int i = 0; i < integerIntegerMap.size(); i++) {
-                doubleStorageCache.computeIfAbsent(i, integerIntegerMap::get);
-            }
-        }
+
+    @Benchmark
+    public void doubleStorageCacheTest() {
+        DoubleStorageCache<Class<?>, Object> doubleStorageCache = new DoubleStorageCache<>(strongCollectionSize);
+        process(doubleStorageCache);
     }
 
     @Benchmark
-    public void doubleStorageCacheBigStrongAtomicBooleanTest(Blackhole bh) {
-        DoubleStorageCacheAtomicBoolean<Integer, Integer> doubleStorageCacheAtomicBoolean = new DoubleStorageCacheAtomicBoolean<>(dataSize);
-
-        for (int j = 0; j < dataLoopsCount; j++) {
-            for (int i = 0; i < integerIntegerMap.size(); i++) {
-                doubleStorageCacheAtomicBoolean.computeIfAbsent(i, integerIntegerMap::get);
-            }
-        }
+    public void doubleStorageCacheAtomicTest() {
+        DoubleStorageCacheAtomicBoolean<Class<?>, Object> doubleStorageCache = new DoubleStorageCacheAtomicBoolean<>(strongCollectionSize);
+        process(doubleStorageCache);
     }
 
     @Benchmark
-    public void doubleStorageCacheAtomicBooleanTest(Blackhole bh) {
-        DoubleStorageCacheAtomicBoolean<Integer, Integer> doubleStorageCacheAtomicBoolean = new DoubleStorageCacheAtomicBoolean<>(strongCollectionSize);
-
-        for (int j = 0; j < dataLoopsCount; j++) {
-            for (int i = 0; i < integerIntegerMap.size(); i++) {
-                doubleStorageCacheAtomicBoolean.computeIfAbsent(i, integerIntegerMap::get);
-            }
-        }
+    public void doubleStorageCacheNoBooleanTest() {
+        DoubleStorageCacheNoSizeCache<Class<?>, Object> doubleStorageCache = new DoubleStorageCacheNoSizeCache<>(strongCollectionSize);
+        process(doubleStorageCache);
     }
+
 
     @Benchmark
-    public void doubleStorageCacheNoSizeCacheTest(Blackhole bh) {
-        DoubleStorageCacheNoSizeCache<Integer, Integer> doubleStorageCacheNoSizeCache = new DoubleStorageCacheNoSizeCache<>(strongCollectionSize);
+    public void concurrentHashMapTest() {
+        ConcurrentHashMap<Class<?>, Object> concurrentHashMap = new ConcurrentHashMap<>();
+        process(concurrentHashMap);
+    }
 
-        for (int j = 0; j < dataLoopsCount; j++) {
-            for (int i = 0; i < integerIntegerMap.size(); i++) {
-                doubleStorageCacheNoSizeCache.computeIfAbsent(i, integerIntegerMap::get);
+
+    private void process(DscInterface<Class<?>, Object> data) {
+        List<Callable<Object>> tasks = new ArrayList<>();
+        for (int i = 0; i < dataSetLoopSize; i++) {
+            for (Class<?> key : dataMap) {
+                tasks.add(() -> data.computeIfAbsent(key, k -> computeNewObject()));
             }
+        }
+        try {
+            executorService.invokeAll(tasks);
+        } catch (InterruptedException e) {
+
         }
     }
 
-    @Benchmark
-    public void doubleBigStorageCacheNoSizeCacheTest(Blackhole bh) {
-        DoubleStorageCacheNoSizeCache<Integer, Integer> doubleStorageCacheNoSizeCache = new DoubleStorageCacheNoSizeCache<>(dataSize);
-
-        for (int j = 0; j < dataLoopsCount; j++) {
-            for (int i = 0; i < integerIntegerMap.size(); i++) {
-                doubleStorageCacheNoSizeCache.computeIfAbsent(i, integerIntegerMap::get);
+    private void process(ConcurrentHashMap<Class<?>, Object> data) {
+        List<Callable<Object>> tasks = new ArrayList<>();
+        for (int i = 0; i < dataSetLoopSize; i++) {
+            for (Class<?> key : dataMap) {
+                tasks.add(() -> data.computeIfAbsent(key, k -> computeNewObject()));
             }
+        }
+        try {
+            executorService.invokeAll(tasks);
+        } catch (InterruptedException e) {
+
         }
     }
 
-    @Benchmark
-    public void concurrentHashMapTest(Blackhole bh) {
-        ConcurrentHashMap<Integer, Integer> concurrentHashMap = new ConcurrentHashMap<>();
-        for (int j = 0; j < dataLoopsCount; j++) {
-            for (int i = 0; i < integerIntegerMap.size(); i++) {
-                concurrentHashMap.computeIfAbsent(i, integerIntegerMap::get);
-            }
+    @TearDown
+    public void stop() {
+        executorService.shutdownNow();
+    }
+
+    private List<Class<?>> createClassData() {
+        Reflections reflectionsRu = new Reflections("ru", new SubTypesScanner(false));
+        final Set<String> allTypes = reflectionsRu.getAllTypes();
+        final List<Class<?>> collect = allTypes.stream()
+            .map(BenchmarkLoop::toClass)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
+
+        Reflections reflectionsOrg = new Reflections("org", new SubTypesScanner(false));
+        final Set<String> allTypesOrg = reflectionsOrg.getAllTypes();
+        final List<Class<?>> collectOrg = allTypesOrg.stream()
+            .map(BenchmarkLoop::toClass)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
+
+        collect.addAll(collectOrg);
+
+        return collect;
+    }
+
+    private static Class<?> toClass(String s) {
+        try {
+            return Class.forName(s);
+        } catch (Throwable e) {
+            return null;
         }
     }
 
-    private Map<Integer, Integer> createData() {
-        Map<Integer, Integer> data = new HashMap<>();
-        for (int i = 0; i < dataSize; i++) {
-            data.put(i, i);
-        }
-        return data;
+    private Object computeNewObject() {
+//        System.out.println("---->>> " + Thread.currentThread().getId());
+//        try {
+//            Thread.sleep(2);
+//        } catch (InterruptedException e) {
+//            return new Object();
+//        }
+//        System.out.println("<<<----- " + Thread.currentThread().getId());
+        return new Object();
     }
 
 }
