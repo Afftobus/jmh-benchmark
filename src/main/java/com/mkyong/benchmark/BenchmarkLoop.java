@@ -7,9 +7,9 @@ import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 /*
@@ -18,69 +18,116 @@ http://hg.openjdk.java.net/code-tools/jmh/file/tip/jmh-samples/src/main/java/org
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @State(Scope.Benchmark)
-@Fork(value = 2, jvmArgs = {"-Xms2G", "-Xmx2G"})
-//@Warmup(iterations = 3)
-//@Measurement(iterations = 8)
+//@Fork(value = 2, jvmArgs = {"-Xms2G", "-Xmx2G"})
+@Warmup(iterations = 3)
+@Measurement(iterations = 8)
 public class BenchmarkLoop {
 
-    @Param({"10000000"})
-    private int N;
+    @Param({"10000"})
+    private int dataSize;
 
-    private List<String> DATA_FOR_TESTING;
+    @Param({"10"})
+    private int dataLoopsCount;
+
+    @Param({"1024"})
+    private int strongCollectionSize;
+
+    private Map<Integer, Integer> integerIntegerMap;
 
     public static void main(String[] args) throws RunnerException {
 
         Options opt = new OptionsBuilder()
-                .include(BenchmarkLoop.class.getSimpleName())
-                .forks(1)
-                .build();
-
+            .include(BenchmarkLoop.class.getSimpleName())
+            .forks(1)
+            .build();
         new Runner(opt).run();
     }
 
     @Setup
     public void setup() {
-        DATA_FOR_TESTING = createData();
+        integerIntegerMap = createData();
     }
 
     @Benchmark
-    public void loopFor(Blackhole bh) {
-        for (int i = 0; i < DATA_FOR_TESTING.size(); i++) {
-            String s = DATA_FOR_TESTING.get(i); //take out n consume, fair with foreach
-            bh.consume(s);
+    public void doubleStorageCacheTest(Blackhole bh) {
+        DoubleStorageCache<Integer, Integer> doubleStorageCache = new DoubleStorageCache<>(strongCollectionSize);
+
+        for (int j = 0; j < dataLoopsCount; j++) {
+            for (int i = 0; i < integerIntegerMap.size(); i++) {
+                doubleStorageCache.computeIfAbsent(i, integerIntegerMap::get);
+            }
         }
     }
 
     @Benchmark
-    public void loopWhile(Blackhole bh) {
-        int i = 0;
-        while (i < DATA_FOR_TESTING.size()) {
-            String s = DATA_FOR_TESTING.get(i);
-            bh.consume(s);
-            i++;
+    public void doubleStorageCacheBigStrongTest(Blackhole bh) {
+        DoubleStorageCache<Integer, Integer> doubleStorageCache = new DoubleStorageCache<>(dataSize);
+
+        for (int j = 0; j < dataLoopsCount; j++) {
+            for (int i = 0; i < integerIntegerMap.size(); i++) {
+                doubleStorageCache.computeIfAbsent(i, integerIntegerMap::get);
+            }
         }
     }
 
     @Benchmark
-    public void loopForEach(Blackhole bh) {
-        for (String s : DATA_FOR_TESTING) {
-            bh.consume(s);
+    public void doubleStorageCacheBigStrongAtomicBooleanTest(Blackhole bh) {
+        DoubleStorageCacheAtomicBoolean<Integer, Integer> doubleStorageCacheAtomicBoolean = new DoubleStorageCacheAtomicBoolean<>(dataSize);
+
+        for (int j = 0; j < dataLoopsCount; j++) {
+            for (int i = 0; i < integerIntegerMap.size(); i++) {
+                doubleStorageCacheAtomicBoolean.computeIfAbsent(i, integerIntegerMap::get);
+            }
         }
     }
 
     @Benchmark
-    public void loopIterator(Blackhole bh) {
-        Iterator<String> iterator = DATA_FOR_TESTING.iterator();
-        while (iterator.hasNext()) {
-            String s = iterator.next();
-            bh.consume(s);
+    public void doubleStorageCacheAtomicBooleanTest(Blackhole bh) {
+        DoubleStorageCacheAtomicBoolean<Integer, Integer> doubleStorageCacheAtomicBoolean = new DoubleStorageCacheAtomicBoolean<>(strongCollectionSize);
+
+        for (int j = 0; j < dataLoopsCount; j++) {
+            for (int i = 0; i < integerIntegerMap.size(); i++) {
+                doubleStorageCacheAtomicBoolean.computeIfAbsent(i, integerIntegerMap::get);
+            }
         }
     }
 
-    private List<String> createData() {
-        List<String> data = new ArrayList<>();
-        for (int i = 0; i < N; i++) {
-            data.add("Number : " + i);
+    @Benchmark
+    public void doubleStorageCacheNoSizeCacheTest(Blackhole bh) {
+        DoubleStorageCacheNoSizeCache<Integer, Integer> doubleStorageCacheNoSizeCache = new DoubleStorageCacheNoSizeCache<>(strongCollectionSize);
+
+        for (int j = 0; j < dataLoopsCount; j++) {
+            for (int i = 0; i < integerIntegerMap.size(); i++) {
+                doubleStorageCacheNoSizeCache.computeIfAbsent(i, integerIntegerMap::get);
+            }
+        }
+    }
+
+    @Benchmark
+    public void doubleBigStorageCacheNoSizeCacheTest(Blackhole bh) {
+        DoubleStorageCacheNoSizeCache<Integer, Integer> doubleStorageCacheNoSizeCache = new DoubleStorageCacheNoSizeCache<>(dataSize);
+
+        for (int j = 0; j < dataLoopsCount; j++) {
+            for (int i = 0; i < integerIntegerMap.size(); i++) {
+                doubleStorageCacheNoSizeCache.computeIfAbsent(i, integerIntegerMap::get);
+            }
+        }
+    }
+
+    @Benchmark
+    public void concurrentHashMapTest(Blackhole bh) {
+        ConcurrentHashMap<Integer, Integer> concurrentHashMap = new ConcurrentHashMap<>();
+        for (int j = 0; j < dataLoopsCount; j++) {
+            for (int i = 0; i < integerIntegerMap.size(); i++) {
+                concurrentHashMap.computeIfAbsent(i, integerIntegerMap::get);
+            }
+        }
+    }
+
+    private Map<Integer, Integer> createData() {
+        Map<Integer, Integer> data = new HashMap<>();
+        for (int i = 0; i < dataSize; i++) {
+            data.put(i, i);
         }
         return data;
     }
