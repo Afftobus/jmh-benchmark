@@ -51,7 +51,7 @@ public class BenchmarkLoop {
         process(doubleStorageCache);
     }
 
-//    @Benchmark
+    @Benchmark
     public void doubleStorageCacheAtomicBigTest() {
         DoubleStorageCacheAtomicBoolean<Class<?>, Object> doubleStorageCache = new DoubleStorageCacheAtomicBoolean<>(dataSize);
         process(doubleStorageCache);
@@ -63,27 +63,38 @@ public class BenchmarkLoop {
         process(doubleStorageCache);
     }
 
+    @Benchmark
+    public void doubleStorageCacheOptionalBigTest() {
+        DoubleStorageCacheOptional<Class<?>, Object> doubleStorageCache = new DoubleStorageCacheOptional<>(dataSize);
+        process(doubleStorageCache);
+    }
 
-//    @Benchmark
+
+    @Benchmark
     public void doubleStorageCacheTest() {
         DoubleStorageCache<Class<?>, Object> doubleStorageCache = new DoubleStorageCache<>(strongCollectionSize);
         process(doubleStorageCache);
     }
 
-//    @Benchmark
+    @Benchmark
     public void doubleStorageCacheAtomicTest() {
         DoubleStorageCacheAtomicBoolean<Class<?>, Object> doubleStorageCache = new DoubleStorageCacheAtomicBoolean<>(strongCollectionSize);
         process(doubleStorageCache);
     }
 
-//    @Benchmark
+    @Benchmark
     public void doubleStorageCacheNoBooleanTest() {
         DoubleStorageCacheNoSizeCache<Class<?>, Object> doubleStorageCache = new DoubleStorageCacheNoSizeCache<>(strongCollectionSize);
         process(doubleStorageCache);
     }
 
+    @Benchmark
+    public void doubleStorageCacheOptionalTest() {
+        DoubleStorageCacheOptional<Class<?>, Object> doubleStorageCache = new DoubleStorageCacheOptional<>(strongCollectionSize);
+        process(doubleStorageCache);
+    }
 
-//    @Benchmark
+    @Benchmark
     public void concurrentHashMapTest() {
         ConcurrentHashMap<Class<?>, Object> concurrentHashMap = new ConcurrentHashMap<>();
         process(concurrentHashMap);

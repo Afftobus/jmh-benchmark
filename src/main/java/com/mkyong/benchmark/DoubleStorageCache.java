@@ -23,12 +23,12 @@ public class DoubleStorageCache<K, V> implements DscInterface<K, V> {
 
   public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction) {
 //    System.out.println("computeIfAbsent Thread " + Thread.currentThread().getId() + " This  " + this);
-    if (strongStorage.mappingCount() < strongStorageMaxSize) {
+    if (!strongStorageOverloaded && strongStorage.mappingCount() < strongStorageMaxSize) {
       return strongStorage.computeIfAbsent(key, mappingFunction);
     }
-//    if (!strongStorageOverloaded) {
-//      strongStorageOverloaded = true;
-//    }
+    if (!strongStorageOverloaded) {
+      strongStorageOverloaded = true;
+    }
 
     V value = strongStorage.get(key);
 
