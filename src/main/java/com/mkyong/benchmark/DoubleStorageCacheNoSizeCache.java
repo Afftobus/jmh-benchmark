@@ -2,6 +2,7 @@ package com.mkyong.benchmark;
 
 import org.springframework.util.ConcurrentReferenceHashMap;
 
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
@@ -24,12 +25,6 @@ public class DoubleStorageCacheNoSizeCache<K, V> implements DscInterface<K, V> {
       return strongStorage.computeIfAbsent(key, mappingFunction);
     }
 
-    V value = strongStorage.get(key);
-
-    if (value != null) {
-      return value;
-    }
-
-    return weakStorage.computeIfAbsent(key, mappingFunction);
+    return Optional.ofNullable(strongStorage.get(key)).orElseGet(() -> weakStorage.computeIfAbsent(key, mappingFunction));
   }
 }

@@ -29,7 +29,6 @@ http://hg.openjdk.java.net/code-tools/jmh/file/tip/jmh-samples/src/main/java/org
 @Measurement(iterations = 8)
 public class BenchmarkLoop {
     private final List<Class<?>> dataMap = createClassData();
-    ;
     private final int dataSize = dataMap.size();
     private final int strongCollectionSize = dataSize / 3;
     private final int dataSetLoopSize = 4;
@@ -52,7 +51,7 @@ public class BenchmarkLoop {
         process(doubleStorageCache);
     }
 
-    @Benchmark
+//    @Benchmark
     public void doubleStorageCacheAtomicBigTest() {
         DoubleStorageCacheAtomicBoolean<Class<?>, Object> doubleStorageCache = new DoubleStorageCacheAtomicBoolean<>(dataSize);
         process(doubleStorageCache);
@@ -65,26 +64,26 @@ public class BenchmarkLoop {
     }
 
 
-    @Benchmark
+//    @Benchmark
     public void doubleStorageCacheTest() {
         DoubleStorageCache<Class<?>, Object> doubleStorageCache = new DoubleStorageCache<>(strongCollectionSize);
         process(doubleStorageCache);
     }
 
-    @Benchmark
+//    @Benchmark
     public void doubleStorageCacheAtomicTest() {
         DoubleStorageCacheAtomicBoolean<Class<?>, Object> doubleStorageCache = new DoubleStorageCacheAtomicBoolean<>(strongCollectionSize);
         process(doubleStorageCache);
     }
 
-    @Benchmark
+//    @Benchmark
     public void doubleStorageCacheNoBooleanTest() {
         DoubleStorageCacheNoSizeCache<Class<?>, Object> doubleStorageCache = new DoubleStorageCacheNoSizeCache<>(strongCollectionSize);
         process(doubleStorageCache);
     }
 
 
-    @Benchmark
+//    @Benchmark
     public void concurrentHashMapTest() {
         ConcurrentHashMap<Class<?>, Object> concurrentHashMap = new ConcurrentHashMap<>();
         process(concurrentHashMap);
